@@ -1,0 +1,1 @@
+INSERT INTO `curso_inscritos` (`id`, `nome`, `cpf`, `email`, `curso_id`, `cnpj`, `empresa`, `forma_pagamento_id`, `pago`, `pago_valor`, `pago_data`, `envio_id`) VALUES (215, 'Teste 12345789', '000.000.000-00', 'teste1234@gmail.com', 4823, '12345678000199', 'Empresa1', 31, 3, 0.00, '2024-07-24', 21);

@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Formulário para Inscrição</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: #f8f9fa;
+            font-family: 'Arial', sans-serif;
+        }
+        .container {
+            background: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-top: 20px;
+        }
+        .header, .footer {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .btn-info {
+            background-color: #17a2b8;
+            border-color: #17a2b8;
+        }
+        .btn-info:hover {
+            background-color: #138496;
+            border-color: #117a8b;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            border-color: #007bff;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+            border-color: #004085;
+        }
+        .person-block {
+            border: 1px solid #ccc;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            background-color: #f8f9fa;
+        }
+        .person-block p {
+            margin: 0;
+        }
+        #resultado-inscricao {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>Formulário para Inscrição</h2>
+            <p>bem como exportar o modelo em excel com as informações de todos os participantes.</p>
+        </div>
+        <!-- Link para baixar o arquivo Excel modelo -->
+        <div class="mb-3 text-center">
+            <a href="modelo.xlsx" class="btn btn-info" download>Baixar Modelo Excel</a>
+        </div>
+        <form action="process.php" method="post" id="inscricaoForm" enctype="multipart/form-data">
+            <!-- Campo para Nome, Email, CNPJ e Empresa -->
+            <div class="form-group">
+                <label for="nomeEnvio">Nome:</label>
+                <input type="text" class="form-control" id="nomeEnvio" name="nomeEnvio" required>
+            </div>
+            <div class="form-group">
+                <label for="emailEnvio">Email:</label>
+                <input type="email" class="form-control" id="emailEnvio" name="emailEnvio" required>
+            </div>
+            <div class="form-group">
+                <label for="cnpjEnvio">CNPJ:</label>
+                <input type="text" class="form-control" id="cnpjEnvio" name="cnpjEnvio" required>
+            </div>
+            <div class="form-group">
+                <label for="empresaEnvio">Empresa:</label>
+                <input type="text" class="form-control" id="empresaEnvio" name="empresaEnvio" required>
+            </div>
+            <!-- Campo para upload de Excel -->
+            <div class="form-group">
+                <label for="excelFile">Importar Excel:</label>
+                <input type="file" class="form-control-file" id="excelFile" name="excelFile" accept=".xlsx" onchange="loadExcel(event)">
+            </div>
+            <div id="pessoas-container"></div>
+            <button type="submit" class="btn btn-primary btn-block mt-3">Enviar</button>
+        </form>
+        <!-- Div para exibir os nomes das pessoas inscritas -->
+        <div id="resultado-inscricao" class="mt-4"></div>
+        <div class="footer">
+            <p>&copy; 2024 - Gabriel Barcellos</p>
+        </div>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+    <script>
+        function loadExcel(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+
+                    // Assume the first sheet is the one we want
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+
+                    // Convert sheet to JSON
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+                    // Verificar se a primeira linha contém os cabeçalhos
+                    const headers = jsonData[0].map(item => item.trim());
+                    const expectedHeaders = ['nome', 'cpf', 'email', 'cnpj', 'empresa'];
+                    const hasCorrectHeaders = expectedHeaders.every(header => headers.includes(header));
+
+                    if (hasCorrectHeaders) {
+                        let pessoasHTML = '';
+                        for (let i = 1; i < jsonData.length; i++) {
+                            const row = jsonData[i];
+                            if (row.length < 5) continue; // Ignorar linhas incompletas
+
+                            const pessoa = {
+                                nome: row[0],
+                                cpf: row[1],
+                                email: row[2],
+                                cnpj: row[3],
+                                empresa: row[4],
+                                curso_id: 4823 // Valor fixo para curso_id ID DO CURSO  
+                            };
+
+                            pessoasHTML += `
+                                <div class="person-block">
+                                    <div class="form-group">
+                                        <label>Nome:</label>
+                                        <p>${pessoa['nome']}</p>
+                                    </div>
+                                    <!-- Campos ocultos -->
+                                    <input type="hidden" name="pessoas[${i-1}][nome]" value="${pessoa['nome']}">
+                                    <input type="hidden" name="pessoas[${i-1}][cpf]" value="${pessoa['cpf']}">
+                                    <input type="hidden" name="pessoas[${i-1}][email]" value="${pessoa['email']}">
+                                    <input type="hidden" name="pessoas[${i-1}][curso_id]" value="4823"> 
+                                    <input type="hidden" name="pessoas[${i-1}][cnpj]" value="${pessoa['cnpj']}">
+                                    <input type="hidden" name="pessoas[${i-1}][empresa]" value="${pessoa['empresa']}">
+                                    <input type="hidden" name="pessoas[${i-1}][forma_pagamento_id]" value="31">
+                                    <input type="hidden" name="pessoas[${i-1}][pago]" value="3">
+                                    <input type="hidden" name="pessoas[${i-1}][pago_valor]" value="0.00">
+                                    <input type="hidden" name="pessoas[${i-1}][pago_data]" value="${new Date().toISOString().split('T')[0]}">
+                                </div>
+                            `;
+                        }
+                        document.getElementById('pessoas-container').innerHTML = pessoasHTML;
+                    } else {
+                        alert('O arquivo Excel não contém os cabeçalhos corretos.');
+                    }
+                };
+                reader.readAsArrayBuffer(file);
+            }
+        }
+    </script>
+</body>
+</html>
